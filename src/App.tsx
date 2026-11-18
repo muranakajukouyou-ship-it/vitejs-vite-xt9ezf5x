@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 
-// アイテムのデータ型定義
 type Item = {
   id: number;
   title: string;
@@ -11,39 +10,41 @@ type Item = {
   createdAt: number;
 };
 
-const CATEGORIES = ['すべて', '活動', 'アイデア', 'タスク', 'お店'];
+const CATEGORIES = ['すべて', '推し活', 'アイデア', 'タスク', 'お気に入り'];
 
 export default function App() {
-  // localStorage から初期データを読み込む（なければ空配列）
   const [items, setItems] = useState<Item[]>(() => {
     const saved = localStorage.getItem('my_idea_board_items');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        // 万が一配列以外（undefinedやnullなど）になっていたら初期データを返す
+        if (Array.isArray(parsed)) {
+          return parsed;
+        }
       } catch (e) {
         console.error(e);
       }
     }
-    
+    return [
+      { id: 1, title: '新しいWebアプリの企画', category: 'アイデア', rating: 5, memo: 'Reactを使った実用的なツールを作る', createdAt: Date.now() - 10000 },
+      { id: 2, title: '推しのライブBlu-ray鑑賞', category: '推し活', rating: 5, memo: '週末の夜の楽しみ。リピート再生必須！', createdAt: Date.now() - 5000 },
+    ];
   });
 
-  // 入力フォームの状態
   const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('活動');
+  const [category, setCategory] = useState('推し活');
   const [rating, setRating] = useState(5);
   const [memo, setMemo] = useState('');
 
-  // 検索・絞り込み・並び替えの状態
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('すべて');
   const [sortBy, setSortBy] = useState<'new' | 'rating'>('new');
 
-  // items が更新されるたびにブラウザの localStorage に保存する
   useEffect(() => {
     localStorage.setItem('my_idea_board_items', JSON.stringify(items));
   }, [items]);
 
-  // 新規アイテムの追加
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
@@ -58,38 +59,37 @@ export default function App() {
     };
 
     setItems([newItem, ...items]);
-    // フォームをリセット
     setTitle('');
     setMemo('');
     setRating(5);
   };
 
-  // アイテムの削除
   const handleDeleteItem = (id: number) => {
     if (window.confirm('このカードを削除してもよろしいですか？')) {
       setItems(items.filter((item) => item.id !== id));
     }
   };
 
-  // 1. カテゴリで絞り込み ➔ 2. キーワードで検索 ➔ 3. 並び替え
-  const filteredItems = items
+  // 安全に filter を実行するためのガード
+  const safeItems = Array.isArray(items) ? items : [];
+
+  const filteredItems = safeItems
     .filter((item) => {
       const matchCategory = selectedCategory === 'すべて' || item.category === selectedCategory;
-      const matchKeyword = item.title.toLowerCase().includes(searchKeyword.toLowerCase()) ||
-                           item.memo.toLowerCase().includes(searchKeyword.toLowerCase());
+      const matchKeyword = (item.title || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
+                           (item.memo || '').toLowerCase().includes(searchKeyword.toLowerCase());
       return matchCategory && matchKeyword;
     })
     .sort((a, b) => {
       if (sortBy === 'new') {
-        return b.createdAt - a.createdAt; // 新しい順
+        return b.createdAt - a.createdAt;
       } else {
-        return b.rating - a.rating; // お気に入り度が高い順
+        return b.rating - a.rating;
       }
     });
 
   return (
     <div style={styles.container}>
-      {/* レスポンシブ切り替え用のインラインメディアクエリ */}
       <style>{`
         @media (max-width: 768px) {
           .responsive-layout {
@@ -102,7 +102,7 @@ export default function App() {
       `}</style>
 
       <header style={styles.header}>
-        <h1 style={styles.title}>🐈 My free Board</h1>
+        <h1 style={styles.title}>✨ My Idea & Oshi Board</h1>
         <p style={styles.subtitle}>ブラウザに自動で保存される、自分だけの特別メモ帳</p>
       </header>
 
@@ -117,7 +117,7 @@ export default function App() {
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="例：新曲チェック"
+                placeholder="例：推しの新曲チェック"
                 style={styles.input}
                 required
               />
@@ -170,7 +170,6 @@ export default function App() {
 
         {/* 右側：一覧・検索・カード表示エリア */}
         <div className="responsive-panel" style={styles.contentPanel}>
-          {/* 検索＆コントロールバー */}
           <div style={styles.controlBar}>
             <input
               type="text"
@@ -189,7 +188,6 @@ export default function App() {
             </select>
           </div>
 
-          {/* カテゴリタブフィルター */}
           <div style={styles.tabContainer}>
             {CATEGORIES.map((cat) => (
               <button
@@ -206,7 +204,6 @@ export default function App() {
             ))}
           </div>
 
-          {/* カード一覧 */}
           <div style={styles.cardGrid}>
             {filteredItems.length === 0 ? (
               <p style={styles.emptyText}>該当するカードがありません。</p>
@@ -237,7 +234,6 @@ export default function App() {
     </div>
   );
 }
-
 
 const styles: { [key: string]: React.CSSProperties } = {
   container: {
@@ -319,7 +315,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '10px',
     borderRadius: '8px',
     border: '1px solid #3a3a4a',
-    backgroundColor: '#4682b4',
+    backgroundColor: '#1a1a22',
     color: '#fff',
     fontSize: '0.9rem',
     resize: 'vertical' as const,
@@ -381,7 +377,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '16px',
   },
   card: {
-    backgroundColor: '#00ced1',
+    backgroundColor: '#21212b',
     borderRadius: '12px',
     padding: '16px',
     border: '1px solid #2e2e3a',
@@ -399,8 +395,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     fontSize: '0.7rem',
     padding: '3px 8px',
     borderRadius: '6px',
-    backgroundColor: '#0099d1',
-    color: '#394d12',
+    backgroundColor: '#2e2e3a',
+    color: '#cbd5e1',
   },
   deleteButton: {
     background: 'none',
@@ -423,7 +419,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   cardMemo: {
     fontSize: '0.85rem',
-    color: '#0069d1',
+    color: '#94a3b8',
     margin: '0',
     whiteSpace: 'pre-wrap' as const,
     wordBreak: 'break-word' as const,
