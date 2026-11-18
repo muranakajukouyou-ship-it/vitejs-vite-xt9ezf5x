@@ -14,7 +14,7 @@ type Item = {
 const CATEGORIES = ['すべて', '活動', 'アイデア', 'タスク', 'お店'];
 
 export default function App() {
-  // localStorage から初期データを安全に読み込む修正
+  // localStorage から初期データを安全に読み込む（データがない・壊れている場合は空配列を返す）
   const [items, setItems] = useState<Item[]>(() => {
     const saved = localStorage.getItem('my_idea_board_items');
     if (saved) {
@@ -27,7 +27,7 @@ export default function App() {
         console.error(e);
       }
     }
-    
+    return []; // ← ここを追加して undefined によるクラッシュを防ぎます
   });
 
   // 入力フォームの状態
@@ -323,7 +323,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     padding: '10px',
     borderRadius: '8px',
     border: '1px solid #3a3a4a',
-    backgroundColor: '#4682b4',
+    backgroundColor: '#1a1a22',
     color: '#fff',
     fontSize: '0.9rem',
     resize: 'vertical' as const,
@@ -385,7 +385,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     gap: '16px',
   },
   card: {
-    backgroundColor: '#00ced1',
+    backgroundColor: '#21212b',
     borderRadius: '12px',
     padding: '16px',
     border: '1px solid #2e2e3a',
@@ -397,14 +397,14 @@ const styles: { [key: string]: React.CSSProperties } = {
   cardHeader: {
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    items: 'center',
   },
   cardCategory: {
     fontSize: '0.7rem',
     padding: '3px 8px',
     borderRadius: '6px',
-    backgroundColor: '#0099d1',
-    color: '#394d12',
+    backgroundColor: '#2a2a35',
+    color: '#94a3b8',
   },
   deleteButton: {
     background: 'none',
@@ -427,7 +427,7 @@ const styles: { [key: string]: React.CSSProperties } = {
   },
   cardMemo: {
     fontSize: '0.85rem',
-    color: '#0069d1',
+    color: '#cbd5e1',
     margin: '0',
     whiteSpace: 'pre-wrap' as const,
     wordBreak: 'break-word' as const,
